@@ -1,4 +1,3 @@
-import os
 from io import BytesIO
 
 import altair as alt
@@ -8,10 +7,6 @@ import streamlit as st
 st.set_page_config(
     page_title="Dashboard Entradas e Saidas 2026",
     layout="wide",
-)
-
-CAMINHO_ARQUIVO = os.path.join(
-    os.path.expanduser("~"), "Downloads", "Entradas e saidas 2026.xlsx"
 )
 
 ORDEM_MESES = {
@@ -51,13 +46,7 @@ def normalizar_mes(valor):
 @st.cache_data
 def carregar_dados(arquivo):
     try:
-        if isinstance(arquivo, bytes):
-            xls = pd.ExcelFile(BytesIO(arquivo))
-        else:
-            xls = pd.ExcelFile(arquivo)
-    except FileNotFoundError:
-        st.error("Arquivo nao encontrado: " + str(arquivo))
-        st.stop()
+        xls = pd.ExcelFile(BytesIO(arquivo))
     except Exception as e:
         st.error(f"Arquivo corrompido ou invalido: {e}")
         st.stop()
@@ -74,11 +63,10 @@ def carregar_dados(arquivo):
         df_receitas["Valor"] = pd.to_numeric(df_receitas["Valor"], errors="coerce")
         df_receitas["Data"] = pd.to_datetime(df_receitas["Data"], errors="coerce")
         df_receitas = df_receitas.dropna(subset=["Valor", "Data"])
-        for col in ["Mes", "Tipo", "Cliente"]:
+        for col in ["Mes", "Tipo"]:
             if col in df_receitas.columns and df_receitas[col].dtype == object:
                 df_receitas[col] = df_receitas[col].str.strip()
         df_receitas["Mes"] = df_receitas["Mes"].apply(normalizar_mes)
-        df_receitas["Mes_num"] = df_receitas["Mes"].map(ORDEM_MESES)
     except Exception as e:
         st.error(f"Erro ao processar receitas: {e}")
         st.stop()
@@ -99,7 +87,6 @@ def carregar_dados(arquivo):
             if col in df_despesas.columns and df_despesas[col].dtype == object:
                 df_despesas[col] = df_despesas[col].str.strip()
         df_despesas["Mes"] = df_despesas["Mes"].apply(normalizar_mes)
-        df_despesas["Mes_num"] = df_despesas["Mes"].map(ORDEM_MESES)
     except Exception as e:
         st.error(f"Erro ao processar despesas: {e}")
         st.stop()
@@ -107,23 +94,16 @@ def carregar_dados(arquivo):
     return df_receitas, df_despesas
 
 
-arquivo_local_existe = os.path.exists(CAMINHO_ARQUIVO)
-
 uploaded_file = st.file_uploader(
     "Selecione a planilha Entradas e Saidas 2026 (.xlsx)",
     type=["xlsx"],
 )
 
-if uploaded_file is not None:
-    df_receitas, df_despesas = carregar_dados(uploaded_file.getvalue())
-elif arquivo_local_existe:
-    df_receitas, df_despesas = carregar_dados(CAMINHO_ARQUIVO)
-else:
-    st.info(
-        "Carregue a planilha acima para visualizar o dashboard. "
-        "O arquivo deve conter as abas 'Base CR' e 'Base CP'."
-    )
+if uploaded_file is None:
+    st.info("Carregue a planilha acima para visualizar o dashboard.")
     st.stop()
+
+df_receitas, df_despesas = carregar_dados(uploaded_file.getvalue())
 
 if st.sidebar.button("Atualizar dados"):
     st.cache_data.clear()
