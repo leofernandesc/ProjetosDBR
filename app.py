@@ -10,8 +10,7 @@ st.set_page_config(
     layout="wide",
 )
 
-CAMINHO_REPO = os.path.join(os.path.dirname(__file__), "data", "Entradas e saidas 2026.xlsx")
-CAMINHO_LOCAL = os.path.join(
+CAMINHO_ARQUIVO = os.path.join(
     os.path.expanduser("~"), "Downloads", "Entradas e saidas 2026.xlsx"
 )
 
@@ -108,24 +107,21 @@ def carregar_dados(arquivo):
     return df_receitas, df_despesas
 
 
-arquivo_repo_existe = os.path.exists(CAMINHO_REPO)
-arquivo_local_existe = os.path.exists(CAMINHO_LOCAL)
+arquivo_local_existe = os.path.exists(CAMINHO_ARQUIVO)
 
-uploaded_file = st.sidebar.file_uploader(
-    "Atualizar planilha (opcional)",
+uploaded_file = st.file_uploader(
+    "Selecione a planilha Entradas e Saidas 2026 (.xlsx)",
     type=["xlsx"],
 )
 
 if uploaded_file is not None:
     df_receitas, df_despesas = carregar_dados(uploaded_file.getvalue())
-elif arquivo_repo_existe:
-    df_receitas, df_despesas = carregar_dados(CAMINHO_REPO)
 elif arquivo_local_existe:
-    df_receitas, df_despesas = carregar_dados(CAMINHO_LOCAL)
+    df_receitas, df_despesas = carregar_dados(CAMINHO_ARQUIVO)
 else:
     st.info(
-        "Nenhuma planilha encontrada. "
-        "Use o upload na barra lateral para carregar o arquivo."
+        "Carregue a planilha acima para visualizar o dashboard. "
+        "O arquivo deve conter as abas 'Base CR' e 'Base CP'."
     )
     st.stop()
 
@@ -199,10 +195,10 @@ col3.metric("Despesas Realizadas", f"R$ {total_realizado:,.2f}")
 col4.metric("Saldo", f"R$ {saldo:,.2f}")
 
 st.header("Receitas")
-st.dataframe(df_rec_filtrado, width="stretch")
+st.dataframe(df_rec_filtrado, use_container_width=True)
 
 st.header("Despesas")
-st.dataframe(df_desp_filtrado, width="stretch")
+st.dataframe(df_desp_filtrado, use_container_width=True)
 
 ORDEM_CRONOLOGICA = [m for m in ORDEM_MESES if m in set(meses_rec + meses_desp)]
 
