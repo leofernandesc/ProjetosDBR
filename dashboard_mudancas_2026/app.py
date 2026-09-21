@@ -22,6 +22,9 @@ DBR_SURFACE = "#FFF4C4"
 DBR_INPUT = "#FFFBEF"
 DBR_CHROME = "#FFF1B8"
 DBR_BORDER = "#E6CF72"
+DBR_TABLE_BACKGROUND = "#F4F6FF"
+DBR_TABLE_ALT = "#EAF0FF"
+DBR_TABLE_BORDER = "#B8C4F0"
 
 CSS = f"""
 <style>
@@ -103,8 +106,8 @@ CSS = f"""
     [data-testid="stAlert"] *,
     [data-testid="stFileUploader"] * {{ color: {DBR_NAVY} !important; }}
     .dbr-table-wrap {{
-        background: {DBR_SURFACE};
-        border: 1px solid {DBR_BORDER};
+        background: {DBR_TABLE_BACKGROUND};
+        border: 1px solid {DBR_TABLE_BORDER};
         border-radius: 14px;
         overflow-x: auto;
         margin: 0 0 18px;
@@ -114,11 +117,11 @@ CSS = f"""
         color: {DBR_NAVY};
         font-size: 0.92rem;
         min-width: 100%;
-        background: {DBR_SURFACE};
+        background: {DBR_TABLE_BACKGROUND};
     }}
     .dbr-data-table th {{ background: {DBR_BLUE}; color: white; font-weight: 800; padding: 10px 12px; text-align: left; white-space: nowrap; }}
-    .dbr-data-table td {{ background: {DBR_INPUT}; border-top: 1px solid {DBR_BORDER}; padding: 9px 12px; white-space: nowrap; }}
-    .dbr-data-table tr:nth-child(even) td {{ background: #FFF7D6; }}
+    .dbr-data-table td {{ background: {DBR_TABLE_BACKGROUND}; border-top: 1px solid {DBR_TABLE_BORDER}; padding: 9px 12px; white-space: nowrap; }}
+    .dbr-data-table tr:nth-child(even) td {{ background: {DBR_TABLE_ALT}; }}
     [data-testid="stSidebar"] label,
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] span {{ color: {DBR_NAVY}; }}
