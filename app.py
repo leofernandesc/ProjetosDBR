@@ -21,11 +21,11 @@ st.set_page_config(
 st.markdown(
     f"""
     <style>
-        .stApp {{ background: #F5F7FB; }}
-        [data-testid="stSidebar"] {{ background: #FFFFFF; border-right: 1px solid #E4E7EC; }}
+        .stApp {{ background: #FFF9E6; }}
+        [data-testid="stSidebar"] {{ background: #FFFDF7; border-right: 1px solid #EADFAF; }}
         [data-testid="stMetric"] {{
             background: #FFFFFF;
-            border: 1px solid #E4E7EC;
+            border: 1px solid #EADFAF;
             border-top: 4px solid {DBR_YELLOW};
             border-radius: 14px;
             padding: 14px 16px;
