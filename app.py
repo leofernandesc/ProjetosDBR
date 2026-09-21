@@ -1,13 +1,64 @@
 from io import BytesIO
+from pathlib import Path
 
 import altair as alt
 import pandas as pd
 import streamlit as st
 
+APP_DIR = Path(__file__).resolve().parent
+LOGO_PATH = APP_DIR / "assets" / "dbr.jpg"
+DBR_NAVY = "#17245B"
+DBR_BLUE = "#3547A5"
+DBR_YELLOW = "#F3C400"
+DBR_PALETTE = [DBR_NAVY, DBR_BLUE, DBR_YELLOW, "#7B61FF", "#12B76A"]
+
 st.set_page_config(
-    page_title="Dashboard Entradas e Saidas 2026",
+    page_title="Dashboard Entradas e Saídas | DBR",
+    page_icon=str(LOGO_PATH) if LOGO_PATH.exists() else "📊",
     layout="wide",
 )
+
+st.markdown(
+    f"""
+    <style>
+        .stApp {{ background: #F5F7FB; }}
+        [data-testid="stSidebar"] {{ background: #FFFFFF; border-right: 1px solid #E4E7EC; }}
+        [data-testid="stMetric"] {{
+            background: #FFFFFF;
+            border: 1px solid #E4E7EC;
+            border-top: 4px solid {DBR_YELLOW};
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 5px 16px rgba(23, 36, 91, 0.06);
+        }}
+        [data-testid="stMetricLabel"] {{ color: #667085; }}
+        [data-testid="stMetricValue"] {{ color: {DBR_NAVY}; }}
+        .dbr-hero {{
+            background: linear-gradient(115deg, {DBR_NAVY} 0%, {DBR_BLUE} 100%);
+            color: white;
+            border-radius: 18px;
+            padding: 22px 26px;
+            margin: 4px 0 22px;
+            box-shadow: 0 10px 26px rgba(23, 36, 91, 0.18);
+        }}
+        .dbr-kicker {{ color: {DBR_YELLOW}; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }}
+        .dbr-title {{ font-size: 2rem; font-weight: 800; line-height: 1.1; margin: 4px 0; }}
+        .dbr-subtitle {{ color: #E8ECFF; margin: 0; }}
+        .stButton > button {{ border-color: {DBR_BLUE}; color: {DBR_NAVY}; }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+with st.sidebar:
+    if LOGO_PATH.exists():
+        st.image(str(LOGO_PATH), use_container_width=True)
+    st.markdown("### Fonte de dados")
+    uploaded_file = st.file_uploader(
+        "Selecione a planilha Entradas e Saidas 2026 (.xlsx)",
+        type=["xlsx"],
+        help="A planilha precisa conter as abas Base CR e Base CP.",
+    )
 
 ORDEM_MESES = {
     "Janeiro": 1, "Fevereiro": 2, "Marco": 3, "Abril": 4,
@@ -94,10 +145,22 @@ def carregar_dados(arquivo):
     return df_receitas, df_despesas
 
 
-uploaded_file = st.file_uploader(
-    "Selecione a planilha Entradas e Saidas 2026 (.xlsx)",
-    type=["xlsx"],
-)
+hero_logo, hero_text = st.columns([1.15, 5])
+with hero_logo:
+    if LOGO_PATH.exists():
+        st.image(str(LOGO_PATH), width=190)
+with hero_text:
+    st.markdown(
+        """
+        <div class="dbr-hero">
+            <div class="dbr-kicker">DBR Mudanças & Transportes</div>
+            <div class="dbr-title">Dashboard de Entradas e Saídas</div>
+            <p class="dbr-subtitle">Visão financeira de receitas, despesas orçadas, despesas realizadas e saldo.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 if uploaded_file is None:
     st.info("Carregue a planilha acima para visualizar o dashboard.")
@@ -112,8 +175,6 @@ if st.sidebar.button("Atualizar dados"):
 if df_receitas.empty and df_despesas.empty:
     st.warning("Nenhum dado encontrado na planilha.")
     st.stop()
-
-st.title("Dashboard Entradas e Saidas 2026")
 
 meses_rec = sorted(
     df_receitas["Mes"].dropna().unique(),
@@ -195,7 +256,11 @@ if not df_rec_filtrado.empty:
         .encode(
             x=alt.X("Mes", sort=ORDEM_CRONOLOGICA, title="Mes"),
             y=alt.Y("Valor", title="Valor (R$)"),
-            color=alt.Color("Tipo", title="Tipo de Receita"),
+            color=alt.Color(
+                "Tipo",
+                title="Tipo de Receita",
+                scale=alt.Scale(range=DBR_PALETTE),
+            ),
             tooltip=[
                 alt.Tooltip("Mes", title="Mes"),
                 alt.Tooltip("Tipo", title="Tipo de Receita"),
@@ -226,7 +291,11 @@ if not df_desp_filtrado.empty:
         .encode(
             x=alt.X("Mes", sort=ORDEM_CRONOLOGICA, title="Mes"),
             y=alt.Y("Valor", title="Valor (R$)"),
-            color=alt.Color("Categoria", title="Tipo"),
+            color=alt.Color(
+                "Categoria",
+                title="Tipo",
+                scale=alt.Scale(range=[DBR_YELLOW, DBR_BLUE]),
+            ),
             tooltip=[
                 alt.Tooltip("Mes", title="Mes"),
                 alt.Tooltip("Categoria", title="Tipo"),
