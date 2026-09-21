@@ -714,7 +714,7 @@ def render_mudancas_dashboard(arquivo: bytes) -> None:
         st.download_button(
             "Gerar relatório PDF",
             data=report_pdf,
-            file_name=f"relatorio_mudancas_2026_{report_date}.pdf",
+            file_name=f"relatorio_mudancas_{report_date}.pdf",
             mime="application/pdf",
             key="mudancas_pdf_download",
         )
