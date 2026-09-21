@@ -708,12 +708,13 @@ def render_mudancas_dashboard(arquivo: bytes) -> None:
         ("Depósito DBR", deposit),
     ]
     report_pdf = build_mudancas_report_pdf(table, status_counts, report_metrics, attention_messages)
+    report_date = datetime.now().strftime("%d-%m-%Y")
     download_columns = st.columns(2)
     with download_columns[0]:
         st.download_button(
             "Gerar relatório PDF",
             data=report_pdf,
-            file_name="relatorio_mudancas_2026.pdf",
+            file_name=f"relatorio_mudancas_2026_{report_date}.pdf",
             mime="application/pdf",
             key="mudancas_pdf_download",
         )
