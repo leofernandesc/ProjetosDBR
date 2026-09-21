@@ -30,14 +30,6 @@ STATUS_COLORS = {
     "Depósito - DBR": DBR_NAVY,
 }
 
-SITUATION_COLORS = {
-    "ATRASADA": "#D92D20",
-    "HOJE": "#F79009",
-    "PRÓXIMA": DBR_BLUE,
-    "PROGRAMADA": "#12B76A",
-    "SEM DATA": "#98A2B3",
-}
-
 CSS = f"""
 <style>
     :root {{
@@ -154,6 +146,7 @@ CSS = f"""
     .dbr-hero-title {{ font-size: 2rem; font-weight: 800; line-height: 1.1; margin: 4px 0; }}
     .dbr-hero-subtitle {{ color: #E8ECFF; margin: 0; }}
     .dbr-section {{ color: {DBR_NAVY}; font-size: 1.22rem; font-weight: 800; margin: 24px 0 10px; }}
+    .dbr-subsection {{ color: {DBR_NAVY}; font-size: 1rem; font-weight: 800; margin: 16px 0 8px; }}
     .dbr-alert {{
         background: {DBR_SURFACE};
         border: 1px solid {DBR_BORDER};
@@ -456,19 +449,27 @@ if filtered.empty:
     st.stop()
 
 
-left, right = st.columns([1, 1])
-with left:
-    status_counts = filtered["Status"].value_counts().rename_axis("Status").reset_index(name="Mudanças")
-    fig = make_bar_chart(status_counts, "Mudanças", "Status", "Mudanças por status", "Status")
-    fig.update_layout(yaxis=dict(categoryorder="total ascending"))
-    fig.update_traces(marker_color=[STATUS_COLORS.get(value, DBR_BLUE) for value in status_counts["Status"]])
-    st.plotly_chart(fig, use_container_width=True)
-with right:
-    situation_counts = filtered["Situação"].value_counts().rename_axis("Situação").reset_index(name="Mudanças")
-    fig = make_bar_chart(situation_counts, "Mudanças", "Situação", "Situação dos prazos", "Situação")
-    fig.update_layout(yaxis=dict(categoryorder="total ascending"))
-    fig.update_traces(marker_color=[SITUATION_COLORS.get(value, DBR_BLUE) for value in situation_counts["Situação"]])
-    st.plotly_chart(fig, use_container_width=True)
+st.markdown('<div class="dbr-subsection">Tabela geral</div>', unsafe_allow_html=True)
+table = filtered[
+    ["Nome", "Origem", "Destino", "Data da Mudança", "Tipo", "Status", "Dias", "Situação"]
+].copy()
+table["Data da Mudança"] = table["Data da Mudança"].dt.strftime("%d/%m/%Y")
+table["Dias"] = table["Dias"].astype("Int64")
+render_table(table)
+st.download_button(
+    "Baixar lista filtrada (CSV)",
+    data=table.to_csv(index=False).encode("utf-8-sig"),
+    file_name="mudancas_filtradas.csv",
+    mime="text/csv",
+)
+
+
+st.markdown('<div class="dbr-subsection">Mudanças por status</div>', unsafe_allow_html=True)
+status_counts = filtered["Status"].value_counts().rename_axis("Status").reset_index(name="Mudanças")
+fig = make_bar_chart(status_counts, "Mudanças", "Status", "Mudanças por status", "Status")
+fig.update_layout(yaxis=dict(categoryorder="total ascending"))
+fig.update_traces(marker_color=[STATUS_COLORS.get(value, DBR_BLUE) for value in status_counts["Status"]])
+st.plotly_chart(fig, use_container_width=True)
 
 
 left, right = st.columns([1, 1])
@@ -515,17 +516,3 @@ if not schedule.empty:
         yaxis=dict(color=DBR_NAVY, gridcolor=DBR_BORDER),
     )
     st.plotly_chart(fig, use_container_width=True)
-
-
-table = filtered[
-    ["Nome", "Origem", "Destino", "Data da Mudança", "Tipo", "Status", "Dias", "Situação"]
-].copy()
-table["Data da Mudança"] = table["Data da Mudança"].dt.strftime("%d/%m/%Y")
-table["Dias"] = table["Dias"].astype("Int64")
-render_table(table)
-st.download_button(
-    "Baixar lista filtrada (CSV)",
-    data=table.to_csv(index=False).encode("utf-8-sig"),
-    file_name="mudancas_filtradas.csv",
-    mime="text/csv",
-)
