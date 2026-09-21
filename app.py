@@ -15,6 +15,7 @@ from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
+from reportlab.graphics.shapes import Drawing, Line, Rect, String
 from reportlab.platypus import Image as PdfImage
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table as PdfTable, TableStyle
 
@@ -227,6 +228,89 @@ def pdf_table(
     return table
 
 
+def build_status_chart(status_counts: pd.DataFrame, width: float) -> Drawing:
+    chart_height = 32 + (len(status_counts) * 24)
+    label_width = 155
+    plot_left = label_width
+    plot_width = width - label_width - 28
+    plot_bottom = 20
+    bar_height = 13
+    max_count = max(status_counts["Mudanças"].astype(int).max(), 1)
+    drawing = Drawing(width, chart_height)
+    drawing.add(Rect(
+        0,
+        0,
+        width,
+        chart_height,
+        fillColor=colors.HexColor(DBR_TABLE_BACKGROUND),
+        strokeColor=colors.HexColor(DBR_TABLE_BORDER),
+        strokeWidth=0.6,
+    ))
+    drawing.add(String(
+        10,
+        chart_height - 14,
+        "Distribuição das mudanças por status",
+        fontName="Helvetica-Bold",
+        fontSize=8.5,
+        fillColor=colors.HexColor(DBR_NAVY),
+    ))
+    drawing.add(Line(
+        plot_left,
+        plot_bottom - 4,
+        plot_left + plot_width,
+        plot_bottom - 4,
+        strokeColor=colors.HexColor(DBR_TABLE_BORDER),
+        strokeWidth=0.7,
+    ))
+    drawing.add(String(
+        plot_left,
+        5,
+        "0",
+        fontName="Helvetica",
+        fontSize=7,
+        fillColor=colors.HexColor(DBR_MUTED),
+    ))
+    drawing.add(String(
+        plot_left + plot_width,
+        5,
+        str(max_count),
+        fontName="Helvetica",
+        fontSize=7,
+        textAnchor="end",
+        fillColor=colors.HexColor(DBR_MUTED),
+    ))
+
+    for index, (status, count) in enumerate(status_counts.itertuples(index=False, name=None)):
+        y = chart_height - 30 - (index * 24)
+        bar_width = plot_width * int(count) / max_count
+        drawing.add(String(
+            plot_left - 8,
+            y + 3,
+            str(status),
+            fontName="Helvetica",
+            fontSize=7.5,
+            textAnchor="end",
+            fillColor=colors.HexColor(DBR_NAVY),
+        ))
+        drawing.add(Rect(
+            plot_left,
+            y,
+            max(bar_width, 2),
+            bar_height,
+            fillColor=colors.HexColor(DBR_BLUE),
+            strokeColor=None,
+        ))
+        drawing.add(String(
+            plot_left + bar_width + 5,
+            y + 3,
+            str(int(count)),
+            fontName="Helvetica-Bold",
+            fontSize=7.5,
+            fillColor=colors.HexColor(DBR_NAVY),
+        ))
+    return drawing
+
+
 def build_mudancas_report_pdf(
     table: pd.DataFrame,
     status_counts: pd.DataFrame,
@@ -366,6 +450,8 @@ def build_mudancas_report_pdf(
         for status, count in status_counts.itertuples(index=False, name=None)
     ]
     story.append(metric_cards(status_metrics))
+    story.append(Spacer(1, 3 * mm))
+    story.append(build_status_chart(status_counts, page_width - (2 * side_margin)))
 
     story.append(Paragraph("3. Tabela geral", section_style))
     story.append(pdf_table(table, [145, 85, 85, 74, 74, 110, 42, 75], header_style, body_style))
@@ -665,16 +751,14 @@ def render_mudancas_dashboard(arquivo: bytes) -> None:
     today_count = int((filtered["Situação"] == "HOJE").sum())
     next_seven = int((filtered["Situação"] == "PRÓXIMA").sum())
     without_date = int((filtered["Situação"] == "SEM DATA").sum())
-    deposit = int((filtered["Status"] == "Depósito - DBR").sum())
     status_counts = filtered["Status"].value_counts().rename_axis("Status").reset_index(name="Mudanças")
 
     st.markdown('<div class="dbr-section">Resumo operacional</div>', unsafe_allow_html=True)
-    metric_cols = st.columns(5)
+    metric_cols = st.columns(4)
     metric_cols[0].metric("Mudanças", total)
     metric_cols[1].metric("Para hoje", today_count)
     metric_cols[2].metric("Próximos 7 dias", next_seven)
     metric_cols[3].metric("Sem data", without_date)
-    metric_cols[4].metric("Depósito DBR", deposit)
     if today_count or without_date:
         messages = []
         if today_count:
@@ -705,7 +789,6 @@ def render_mudancas_dashboard(arquivo: bytes) -> None:
         ("Para hoje", today_count),
         ("Próximos 7 dias", next_seven),
         ("Sem data", without_date),
-        ("Depósito DBR", deposit),
     ]
     report_pdf = build_mudancas_report_pdf(table, status_counts, report_metrics, attention_messages)
     report_date = datetime.now().strftime("%d-%m-%Y")
