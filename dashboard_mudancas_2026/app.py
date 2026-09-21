@@ -45,6 +45,11 @@ CSS = f"""
         --dbr-blue: {DBR_BLUE};
         --dbr-yellow: {DBR_YELLOW};
         --dbr-ink: {DBR_INK};
+        --primary-color: {DBR_BLUE} !important;
+        --background-color: {DBR_BACKGROUND} !important;
+        --secondary-background-color: {DBR_CHROME} !important;
+        --text-color: {DBR_NAVY} !important;
+        --dataframe-header-background-color: {DBR_CHROME} !important;
     }}
 
     html, body, #root,
@@ -68,6 +73,9 @@ CSS = f"""
     [data-testid="stSidebar"] > div:first-child,
     [data-testid="stSidebarContent"],
     [data-testid="stSidebarUserContent"] {{ background-color: {DBR_CHROME} !important; border-right: 1px solid {DBR_BORDER} !important; }}
+    #MainMenu,
+    [data-testid="stMainMenu"],
+    [data-testid="stToolbar"] {{ visibility: hidden !important; pointer-events: none !important; height: 0 !important; }}
     [data-testid="stVerticalBlockBorderWrapper"] {{ background-color: {DBR_SURFACE} !important; border: 1px solid {DBR_BORDER} !important; }}
     [data-testid="stMetric"] {{
         background-color: {DBR_SURFACE} !important;
@@ -89,6 +97,43 @@ CSS = f"""
     [data-baseweb="textarea"],
     [data-testid="stTextInput"] input,
     [data-testid="stDateInput"] input {{ background-color: {DBR_INPUT} !important; color: {DBR_NAVY} !important; border-color: {DBR_BORDER} !important; }}
+    [data-baseweb="select"] input,
+    [data-baseweb="menu"],
+    [data-baseweb="popover"],
+    [data-baseweb="popover"] > div,
+    [data-baseweb="calendar"],
+    [role="listbox"],
+    [role="option"] {{ background-color: {DBR_INPUT} !important; color: {DBR_NAVY} !important; }}
+    [data-baseweb="menu"] *,
+    [data-baseweb="popover"] *,
+    [data-baseweb="calendar"] *,
+    [role="listbox"] *,
+    [role="option"] * {{ color: {DBR_NAVY} !important; }}
+    [data-baseweb="menu"] [aria-selected="true"],
+    [role="option"][aria-selected="true"] {{ background-color: {DBR_CHROME} !important; }}
+    [data-baseweb="tag"] {{ background-color: {DBR_CHROME} !important; color: {DBR_NAVY} !important; }}
+    [data-testid="stFileUploader"] section,
+    [data-testid="stFileUploader"] section > div,
+    [data-testid="stFileUploaderDropzone"] {{ background-color: {DBR_INPUT} !important; border-color: {DBR_BORDER} !important; color: {DBR_NAVY} !important; }}
+    [data-testid="stAlert"] *,
+    [data-testid="stFileUploader"] * {{ color: {DBR_NAVY} !important; }}
+    .dbr-table-wrap {{
+        background: {DBR_SURFACE};
+        border: 1px solid {DBR_BORDER};
+        border-radius: 14px;
+        overflow-x: auto;
+        margin: 0 0 18px;
+    }}
+    .dbr-data-table {{
+        border-collapse: collapse;
+        color: {DBR_NAVY};
+        font-size: 0.92rem;
+        min-width: 100%;
+        background: {DBR_SURFACE};
+    }}
+    .dbr-data-table th {{ background: {DBR_CHROME}; color: {DBR_NAVY}; font-weight: 800; padding: 10px 12px; text-align: left; white-space: nowrap; }}
+    .dbr-data-table td {{ background: {DBR_INPUT}; border-top: 1px solid {DBR_BORDER}; padding: 9px 12px; white-space: nowrap; }}
+    .dbr-data-table tr:nth-child(even) td {{ background: #FFF7D6; }}
     [data-testid="stSidebar"] label,
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] span {{ color: {DBR_NAVY}; }}
@@ -259,8 +304,21 @@ def make_bar_chart(data: pd.DataFrame, x: str, y: str, title: str, color: str | 
         plot_bgcolor=DBR_SURFACE,
         margin=dict(l=10, r=10, t=48, b=10),
         showlegend=False,
+        font=dict(color=DBR_NAVY),
+        xaxis=dict(color=DBR_NAVY, gridcolor=DBR_BORDER),
+        yaxis=dict(color=DBR_NAVY, gridcolor=DBR_BORDER),
     )
     return fig
+
+
+def render_table(dataframe: pd.DataFrame) -> None:
+    table_html = dataframe.to_html(index=False, border=0, na_rep="")
+    st.markdown(
+        f'<div class="dbr-table-wrap"><table class="dbr-data-table">'
+        + table_html.split("<table", 1)[1].split(">", 1)[1].rsplit("</table>", 1)[0]
+        + "</table></div>",
+        unsafe_allow_html=True,
+    )
 
 
 with st.sidebar:
@@ -452,6 +510,9 @@ if not schedule.empty:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor=DBR_SURFACE,
         margin=dict(l=10, r=10, t=48, b=10),
+        font=dict(color=DBR_NAVY),
+        xaxis=dict(color=DBR_NAVY, gridcolor=DBR_BORDER),
+        yaxis=dict(color=DBR_NAVY, gridcolor=DBR_BORDER),
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -461,7 +522,7 @@ table = filtered[
 ].copy()
 table["Data da Mudança"] = table["Data da Mudança"].dt.strftime("%d/%m/%Y")
 table["Dias"] = table["Dias"].astype("Int64")
-st.dataframe(table, use_container_width=True, hide_index=True)
+render_table(table)
 st.download_button(
     "Baixar lista filtrada (CSV)",
     data=table.to_csv(index=False).encode("utf-8-sig"),
