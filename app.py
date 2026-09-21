@@ -13,6 +13,7 @@ DBR_YELLOW = "#F3C400"
 DBR_PALETTE = [DBR_NAVY, DBR_BLUE, DBR_YELLOW, "#7B61FF", "#12B76A"]
 DBR_BACKGROUND = "#FFF9E6"
 DBR_SURFACE = "#FFF4C4"
+DBR_INPUT = "#FFFBEF"
 DBR_CHROME = "#FFF1B8"
 DBR_BORDER = "#E6CF72"
 
@@ -25,24 +26,51 @@ st.set_page_config(
 st.markdown(
     f"""
     <style>
+        html, body, #root,
         .stApp,
         [data-testid="stAppViewContainer"],
+        [data-testid="stAppViewContainer"] > div,
         [data-testid="stMain"],
-        [data-testid="stMainBlockContainer"] {{ background: {DBR_BACKGROUND}; }}
+        [data-testid="stMain"] > div,
+        [data-testid="stMainBlockContainer"],
+        section.main,
+        section.main > div,
+        .main,
+        .block-container {{ background-color: {DBR_BACKGROUND} !important; }}
+        [data-testid="stDecoration"],
+        [data-testid="stHeader"],
         header[data-testid="stHeader"],
         header[data-testid="stHeader"] > div,
-        [data-testid="stToolbar"] {{ background: {DBR_CHROME}; }}
+        [data-testid="stToolbar"] {{ background-color: {DBR_CHROME} !important; }}
         [data-testid="stSidebar"],
+        [data-testid="stSidebar"] > div,
         [data-testid="stSidebar"] > div:first-child,
-        [data-testid="stSidebarContent"] {{ background: {DBR_CHROME}; border-right: 1px solid {DBR_BORDER}; }}
+        [data-testid="stSidebarContent"],
+        [data-testid="stSidebarUserContent"] {{ background-color: {DBR_CHROME} !important; border-right: 1px solid {DBR_BORDER} !important; }}
+        [data-testid="stVerticalBlockBorderWrapper"] {{ background-color: {DBR_SURFACE} !important; border: 1px solid {DBR_BORDER} !important; }}
         [data-testid="stMetric"] {{
-            background: {DBR_SURFACE};
-            border: 1px solid {DBR_BORDER};
+            background-color: {DBR_SURFACE} !important;
+            border: 1px solid {DBR_BORDER} !important;
             border-top: 4px solid {DBR_YELLOW};
             border-radius: 14px;
             padding: 14px 16px;
             box-shadow: 0 5px 16px rgba(23, 36, 91, 0.06);
         }}
+        [data-testid="stFileUploader"],
+        [data-testid="stFileUploader"] section,
+        [data-testid="stDataFrame"],
+        [data-testid="stAlert"],
+        [data-testid="stAlert"] > div,
+        [data-testid="stExpander"],
+        [data-testid="stExpander"] > details {{ background-color: {DBR_SURFACE} !important; border-color: {DBR_BORDER} !important; }}
+        [data-baseweb="select"] > div,
+        [data-baseweb="input"] > div,
+        [data-baseweb="textarea"],
+        [data-testid="stTextInput"] input,
+        [data-testid="stDateInput"] input {{ background-color: {DBR_INPUT} !important; color: {DBR_NAVY} !important; border-color: {DBR_BORDER} !important; }}
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] p,
+        [data-testid="stSidebar"] span {{ color: {DBR_NAVY}; }}
         [data-testid="stMetricLabel"] {{ color: #667085; }}
         [data-testid="stMetricValue"] {{ color: {DBR_NAVY}; }}
         .dbr-hero {{
@@ -56,9 +84,6 @@ st.markdown(
         .dbr-kicker {{ color: {DBR_YELLOW}; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }}
         .dbr-title {{ font-size: 2rem; font-weight: 800; line-height: 1.1; margin: 4px 0; }}
         .dbr-subtitle {{ color: #E8ECFF; margin: 0; }}
-        [data-testid="stFileUploader"],
-        [data-testid="stDataFrame"],
-        [data-testid="stAlert"] {{ background: {DBR_SURFACE}; border-color: {DBR_BORDER}; }}
         .stButton > button {{ border-color: {DBR_BLUE}; color: {DBR_NAVY}; }}
     </style>
     """,
