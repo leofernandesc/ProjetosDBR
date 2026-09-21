@@ -23,13 +23,6 @@ DBR_INPUT = "#FFFBEF"
 DBR_CHROME = "#FFF1B8"
 DBR_BORDER = "#E6CF72"
 
-STATUS_COLORS = {
-    "Aguardando Pagto": DBR_YELLOW,
-    "Aguardando Transporte": DBR_BLUE,
-    "Aguardando DATA": "#8B5CF6",
-    "Depósito - DBR": DBR_NAVY,
-}
-
 CSS = f"""
 <style>
     :root {{
@@ -123,7 +116,7 @@ CSS = f"""
         min-width: 100%;
         background: {DBR_SURFACE};
     }}
-    .dbr-data-table th {{ background: {DBR_CHROME}; color: {DBR_NAVY}; font-weight: 800; padding: 10px 12px; text-align: left; white-space: nowrap; }}
+    .dbr-data-table th {{ background: {DBR_BLUE}; color: white; font-weight: 800; padding: 10px 12px; text-align: left; white-space: nowrap; }}
     .dbr-data-table td {{ background: {DBR_INPUT}; border-top: 1px solid {DBR_BORDER}; padding: 9px 12px; white-space: nowrap; }}
     .dbr-data-table tr:nth-child(even) td {{ background: #FFF7D6; }}
     [data-testid="stSidebar"] label,
@@ -468,7 +461,7 @@ st.markdown('<div class="dbr-subsection">Mudanças por status</div>', unsafe_all
 status_counts = filtered["Status"].value_counts().rename_axis("Status").reset_index(name="Mudanças")
 fig = make_bar_chart(status_counts, "Mudanças", "Status", "Mudanças por status", "Status")
 fig.update_layout(yaxis=dict(categoryorder="total ascending"))
-fig.update_traces(marker_color=[STATUS_COLORS.get(value, DBR_BLUE) for value in status_counts["Status"]])
+fig.update_traces(marker_color=DBR_BLUE)
 st.plotly_chart(fig, use_container_width=True)
 
 
@@ -477,7 +470,7 @@ with left:
     by_type = filtered["Tipo"].value_counts().rename_axis("Tipo").reset_index(name="Mudanças")
     fig = make_bar_chart(by_type, "Mudanças", "Tipo", "Mudanças por tipo", "Tipo")
     fig.update_layout(yaxis=dict(categoryorder="total ascending"))
-    fig.update_traces(marker_color=DBR_NAVY)
+    fig.update_traces(marker_color=DBR_BLUE)
     st.plotly_chart(fig, use_container_width=True)
 with right:
     route_data = filtered.assign(

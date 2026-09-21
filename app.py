@@ -10,7 +10,7 @@ LOGO_PATH = APP_DIR / "assets" / "dbr.jpg"
 DBR_NAVY = "#17245B"
 DBR_BLUE = "#3547A5"
 DBR_YELLOW = "#F3C400"
-DBR_PALETTE = [DBR_NAVY, DBR_BLUE, DBR_YELLOW, "#7B61FF", "#12B76A"]
+DBR_PALETTE = [DBR_NAVY, DBR_BLUE, "#5263C7", "#7181D8", "#9AA7E8"]
 DBR_BACKGROUND = "#FFF9E6"
 DBR_SURFACE = "#FFF4C4"
 DBR_INPUT = "#FFFBEF"
@@ -116,7 +116,7 @@ st.markdown(
             min-width: 100%;
             background: {DBR_SURFACE};
         }}
-        .dbr-data-table th {{ background: {DBR_CHROME}; color: {DBR_NAVY}; font-weight: 800; padding: 10px 12px; text-align: left; white-space: nowrap; }}
+        .dbr-data-table th {{ background: {DBR_BLUE}; color: white; font-weight: 800; padding: 10px 12px; text-align: left; white-space: nowrap; }}
         .dbr-data-table td {{ background: {DBR_INPUT}; border-top: 1px solid {DBR_BORDER}; padding: 9px 12px; white-space: nowrap; }}
         .dbr-data-table tr:nth-child(even) td {{ background: #FFF7D6; }}
         [data-testid="stSidebar"] label,
@@ -399,7 +399,7 @@ if not df_desp_filtrado.empty:
             color=alt.Color(
                 "Categoria",
                 title="Tipo",
-                scale=alt.Scale(range=[DBR_YELLOW, DBR_BLUE]),
+                scale=alt.Scale(range=[DBR_NAVY, DBR_BLUE]),
             ),
             tooltip=[
                 alt.Tooltip("Mes", title="Mes"),
