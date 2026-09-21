@@ -62,8 +62,7 @@ CSS = f"""
     [data-testid="stSidebarContent"],
     [data-testid="stSidebarUserContent"] {{ background-color: {DBR_CHROME} !important; border-right: 1px solid {DBR_BORDER} !important; }}
     #MainMenu,
-    [data-testid="stMainMenu"],
-    [data-testid="stToolbar"] {{ visibility: hidden !important; pointer-events: none !important; height: 0 !important; }}
+    [data-testid="stMainMenu"] {{ visibility: hidden !important; pointer-events: none !important; height: 0 !important; }}
     [data-testid="stVerticalBlockBorderWrapper"] {{ background-color: {DBR_SURFACE} !important; border: 1px solid {DBR_BORDER} !important; }}
     [data-testid="stMetric"] {{
         background-color: {DBR_SURFACE} !important;
