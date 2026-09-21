@@ -11,6 +11,10 @@ DBR_NAVY = "#17245B"
 DBR_BLUE = "#3547A5"
 DBR_YELLOW = "#F3C400"
 DBR_PALETTE = [DBR_NAVY, DBR_BLUE, DBR_YELLOW, "#7B61FF", "#12B76A"]
+DBR_BACKGROUND = "#FFF9E6"
+DBR_SURFACE = "#FFF4C4"
+DBR_CHROME = "#FFF1B8"
+DBR_BORDER = "#E6CF72"
 
 st.set_page_config(
     page_title="Dashboard Entradas e Saídas | DBR",
@@ -21,11 +25,19 @@ st.set_page_config(
 st.markdown(
     f"""
     <style>
-        .stApp {{ background: #FFF9E6; }}
-        [data-testid="stSidebar"] {{ background: #FFFDF7; border-right: 1px solid #EADFAF; }}
+        .stApp,
+        [data-testid="stAppViewContainer"],
+        [data-testid="stMain"],
+        [data-testid="stMainBlockContainer"] {{ background: {DBR_BACKGROUND}; }}
+        header[data-testid="stHeader"],
+        header[data-testid="stHeader"] > div,
+        [data-testid="stToolbar"] {{ background: {DBR_CHROME}; }}
+        [data-testid="stSidebar"],
+        [data-testid="stSidebar"] > div:first-child,
+        [data-testid="stSidebarContent"] {{ background: {DBR_CHROME}; border-right: 1px solid {DBR_BORDER}; }}
         [data-testid="stMetric"] {{
-            background: #FFFFFF;
-            border: 1px solid #EADFAF;
+            background: {DBR_SURFACE};
+            border: 1px solid {DBR_BORDER};
             border-top: 4px solid {DBR_YELLOW};
             border-radius: 14px;
             padding: 14px 16px;
@@ -44,6 +56,9 @@ st.markdown(
         .dbr-kicker {{ color: {DBR_YELLOW}; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }}
         .dbr-title {{ font-size: 2rem; font-weight: 800; line-height: 1.1; margin: 4px 0; }}
         .dbr-subtitle {{ color: #E8ECFF; margin: 0; }}
+        [data-testid="stFileUploader"],
+        [data-testid="stDataFrame"],
+        [data-testid="stAlert"] {{ background: {DBR_SURFACE}; border-color: {DBR_BORDER}; }}
         .stButton > button {{ border-color: {DBR_BLUE}; color: {DBR_NAVY}; }}
     </style>
     """,
@@ -267,6 +282,7 @@ if not df_rec_filtrado.empty:
                 alt.Tooltip("Valor", title="Valor (R$)", format=".2f"),
             ],
         )
+        .properties(background=DBR_SURFACE)
     )
     st.altair_chart(fig_receitas, use_container_width=True)
 
@@ -302,5 +318,6 @@ if not df_desp_filtrado.empty:
                 alt.Tooltip("Valor", title="Valor (R$)", format=".2f"),
             ],
         )
+        .properties(background=DBR_SURFACE)
     )
     st.altair_chart(fig_despesas, use_container_width=True)

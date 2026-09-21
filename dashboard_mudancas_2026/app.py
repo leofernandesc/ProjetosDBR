@@ -18,6 +18,9 @@ DBR_YELLOW = "#F3C400"
 DBR_INK = "#172033"
 DBR_MUTED = "#667085"
 DBR_BACKGROUND = "#FFF9E6"
+DBR_SURFACE = "#FFF4C4"
+DBR_CHROME = "#FFF1B8"
+DBR_BORDER = "#E6CF72"
 
 STATUS_COLORS = {
     "Aguardando Pagto": DBR_YELLOW,
@@ -43,11 +46,19 @@ CSS = f"""
         --dbr-ink: {DBR_INK};
     }}
 
-    .stApp {{ background: {DBR_BACKGROUND}; }}
-    [data-testid="stSidebar"] {{ background: #FFFDF7; border-right: 1px solid #EADFAF; }}
+    .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
+    [data-testid="stMainBlockContainer"] {{ background: {DBR_BACKGROUND}; }}
+    header[data-testid="stHeader"],
+    header[data-testid="stHeader"] > div,
+    [data-testid="stToolbar"] {{ background: {DBR_CHROME}; }}
+    [data-testid="stSidebar"],
+    [data-testid="stSidebar"] > div:first-child,
+    [data-testid="stSidebarContent"] {{ background: {DBR_CHROME}; border-right: 1px solid {DBR_BORDER}; }}
     [data-testid="stMetric"] {{
-        background: #FFFFFF;
-        border: 1px solid #EADFAF;
+        background: {DBR_SURFACE};
+        border: 1px solid {DBR_BORDER};
         border-top: 4px solid {DBR_YELLOW};
         border-radius: 14px;
         padding: 14px 16px;
@@ -80,6 +91,9 @@ CSS = f"""
         margin: 12px 0 18px;
     }}
     .dbr-small {{ color: {DBR_MUTED}; font-size: 0.9rem; }}
+    [data-testid="stFileUploader"],
+    [data-testid="stDataFrame"],
+    [data-testid="stAlert"] {{ background: {DBR_SURFACE}; border-color: {DBR_BORDER}; }}
     .stButton > button {{ border-color: {DBR_BLUE}; color: {DBR_NAVY}; }}
     .stDownloadButton > button {{ background: {DBR_NAVY}; color: white; border: 0; }}
 </style>
@@ -217,7 +231,7 @@ def make_bar_chart(data: pd.DataFrame, x: str, y: str, title: str, color: str | 
     fig.update_layout(
         title_font_color=DBR_NAVY,
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="white",
+        plot_bgcolor=DBR_SURFACE,
         margin=dict(l=10, r=10, t=48, b=10),
         showlegend=False,
     )
@@ -411,7 +425,7 @@ if not schedule.empty:
     fig.update_layout(
         title_font_color=DBR_NAVY,
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="white",
+        plot_bgcolor=DBR_SURFACE,
         margin=dict(l=10, r=10, t=48, b=10),
     )
     st.plotly_chart(fig, use_container_width=True)
