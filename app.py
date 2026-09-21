@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import unicodedata
+from datetime import datetime
+from html import escape
 from io import BytesIO
 from pathlib import Path
 
@@ -8,6 +10,13 @@ import altair as alt
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_LEFT
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.platypus import Image as PdfImage
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table as PdfTable, TableStyle
 
 
 APP_DIR = Path(__file__).resolve().parent
@@ -182,6 +191,190 @@ def render_table(dataframe: pd.DataFrame) -> None:
         + "</table></div>",
         unsafe_allow_html=True,
     )
+
+
+def pdf_text(value: object) -> str:
+    if value is None or pd.isna(value):
+        return ""
+    return escape(str(value)).replace("\n", "<br/>")
+
+
+def pdf_table(
+    dataframe: pd.DataFrame,
+    widths: list[float],
+    header_style: ParagraphStyle,
+    body_style: ParagraphStyle,
+) -> PdfTable:
+    rows = [[Paragraph(pdf_text(column), header_style) for column in dataframe.columns]]
+    for row in dataframe.itertuples(index=False, name=None):
+        rows.append([Paragraph(pdf_text(value), body_style) for value in row])
+
+    table = PdfTable(rows, colWidths=widths, repeatRows=1, splitByRow=1)
+    table_style = [
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(DBR_BLUE)),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor(DBR_TABLE_BORDER)),
+    ]
+    for row_index in range(1, len(rows)):
+        background = DBR_TABLE_BACKGROUND if row_index % 2 else DBR_TABLE_ALT
+        table_style.append(("BACKGROUND", (0, row_index), (-1, row_index), colors.HexColor(background)))
+    table.setStyle(TableStyle(table_style))
+    return table
+
+
+def build_mudancas_report_pdf(
+    table: pd.DataFrame,
+    status_counts: pd.DataFrame,
+    summary_metrics: list[tuple[str, int]],
+    attention_messages: list[str],
+) -> bytes:
+    buffer = BytesIO()
+    page_width, _ = landscape(A4)
+    side_margin = 12 * mm
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "DbrPdfTitle",
+        parent=styles["Title"],
+        fontName="Helvetica-Bold",
+        fontSize=19,
+        leading=23,
+        textColor=colors.HexColor(DBR_NAVY),
+        alignment=TA_LEFT,
+        spaceAfter=3,
+    )
+    section_style = ParagraphStyle(
+        "DbrPdfSection",
+        parent=styles["Heading2"],
+        fontName="Helvetica-Bold",
+        fontSize=12,
+        leading=15,
+        textColor=colors.HexColor(DBR_NAVY),
+        spaceBefore=10,
+        spaceAfter=6,
+    )
+    meta_style = ParagraphStyle(
+        "DbrPdfMeta",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=8,
+        leading=10,
+        textColor=colors.HexColor(DBR_MUTED),
+        spaceAfter=9,
+    )
+    header_style = ParagraphStyle(
+        "DbrPdfHeader",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=7.4,
+        leading=8.5,
+        textColor=colors.white,
+        alignment=TA_LEFT,
+    )
+    body_style = ParagraphStyle(
+        "DbrPdfBody",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=7.2,
+        leading=8.5,
+        textColor=colors.HexColor(DBR_NAVY),
+    )
+    summary_label_style = ParagraphStyle(
+        "DbrPdfSummaryLabel",
+        parent=body_style,
+        fontName="Helvetica-Bold",
+        fontSize=7.6,
+        leading=9,
+        alignment=1,
+    )
+    summary_value_style = ParagraphStyle(
+        "DbrPdfSummaryValue",
+        parent=body_style,
+        fontName="Helvetica-Bold",
+        fontSize=14,
+        leading=16,
+        alignment=1,
+    )
+    alert_style = ParagraphStyle(
+        "DbrPdfAlert",
+        parent=body_style,
+        fontSize=8,
+        leading=10,
+        textColor=colors.HexColor("#614700"),
+    )
+
+    def draw_footer(canvas, document) -> None:
+        canvas.saveState()
+        canvas.setStrokeColor(colors.HexColor(DBR_BORDER))
+        canvas.setLineWidth(0.5)
+        canvas.line(side_margin, 9 * mm, page_width - side_margin, 9 * mm)
+        canvas.setFillColor(colors.HexColor(DBR_MUTED))
+        canvas.setFont("Helvetica", 7)
+        canvas.drawString(side_margin, 5 * mm, "DBR • Relatório de Mudanças 2026")
+        canvas.drawRightString(page_width - side_margin, 5 * mm, f"Página {canvas.getPageNumber()}")
+        canvas.restoreState()
+
+    story = []
+    if LOGO_PATH.exists():
+        story.append(PdfImage(str(LOGO_PATH), width=32 * mm, height=13.5 * mm))
+        story.append(Spacer(1, 2 * mm))
+    story.append(Paragraph("Relatório de Mudanças 2026", title_style))
+    story.append(Paragraph(
+        f"Gerado em {datetime.now():%d/%m/%Y às %H:%M} • {len(table)} registro(s) conforme os filtros aplicados",
+        meta_style,
+    ))
+
+    story.append(Paragraph("1. Resumo operacional", section_style))
+    summary_labels = [label for label, _ in summary_metrics]
+    summary_values = [str(value) for _, value in summary_metrics]
+    summary_width = (page_width - (2 * side_margin)) / max(len(summary_metrics), 1)
+    summary_table = PdfTable(
+        [
+            [Paragraph(pdf_text(label), summary_label_style) for label in summary_labels],
+            [Paragraph(pdf_text(value), summary_value_style) for value in summary_values],
+        ],
+        colWidths=[summary_width] * len(summary_metrics),
+    )
+    summary_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(DBR_SURFACE)),
+        ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor(DBR_BORDER)),
+        ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor(DBR_BORDER)),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, 0), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
+        ("TOPPADDING", (0, 1), (-1, 1), 3),
+        ("BOTTOMPADDING", (0, 1), (-1, 1), 8),
+    ]))
+    story.append(summary_table)
+    if attention_messages:
+        story.append(Spacer(1, 3 * mm))
+        story.append(Paragraph(
+            "<b>Atenção operacional:</b> " + pdf_text(" • ".join(attention_messages)),
+            alert_style,
+        ))
+
+    story.append(Paragraph("2. Mudanças por status", section_style))
+    story.append(pdf_table(status_counts, [page_width - (2 * side_margin) - 120, 120], header_style, body_style))
+
+    story.append(Paragraph("3. Tabela geral", section_style))
+    story.append(pdf_table(table, [145, 85, 85, 74, 74, 110, 42, 75], header_style, body_style))
+
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        leftMargin=side_margin,
+        rightMargin=side_margin,
+        topMargin=12 * mm,
+        bottomMargin=13 * mm,
+        title="Relatório de Mudanças 2026",
+        author="DBR",
+    )
+    document.build(story, onFirstPage=draw_footer, onLaterPages=draw_footer)
+    return buffer.getvalue()
 
 
 # Dashboard 1: Entradas e Saídas
@@ -495,7 +688,36 @@ def render_mudancas_dashboard(arquivo: bytes) -> None:
     table["Data da Mudança"] = table["Data da Mudança"].dt.strftime("%d/%m/%Y")
     table["Dias"] = table["Dias"].astype("Int64")
     render_table(table)
-    st.download_button("Baixar lista filtrada (CSV)", data=table.to_csv(index=False).encode("utf-8-sig"), file_name="mudancas_filtradas.csv", mime="text/csv", key="mudancas_download")
+    attention_messages = []
+    if today_count:
+        attention_messages.append(f"{today_count} para hoje")
+    if without_date:
+        attention_messages.append(f"{without_date} sem data")
+    report_metrics = [
+        ("Mudanças", total),
+        ("Para hoje", today_count),
+        ("Próximos 7 dias", next_seven),
+        ("Sem data", without_date),
+        ("Depósito DBR", deposit),
+    ]
+    report_pdf = build_mudancas_report_pdf(table, status_counts, report_metrics, attention_messages)
+    download_columns = st.columns(2)
+    with download_columns[0]:
+        st.download_button(
+            "Gerar relatório PDF",
+            data=report_pdf,
+            file_name="relatorio_mudancas_2026.pdf",
+            mime="application/pdf",
+            key="mudancas_pdf_download",
+        )
+    with download_columns[1]:
+        st.download_button(
+            "Baixar lista filtrada (CSV)",
+            data=table.to_csv(index=False).encode("utf-8-sig"),
+            file_name="mudancas_filtradas.csv",
+            mime="text/csv",
+            key="mudancas_download",
+        )
 
     fig = make_bar_chart(status_counts, "Mudanças", "Status", "Mudanças por status", "Status")
     fig.update_layout(yaxis=dict(categoryorder="total ascending"))
