@@ -318,6 +318,29 @@ def build_mudancas_report_pdf(
         canvas.drawRightString(page_width - side_margin, 5 * mm, f"Página {canvas.getPageNumber()}")
         canvas.restoreState()
 
+    def metric_cards(metrics: list[tuple[str, int]]) -> PdfTable:
+        labels = [label for label, _ in metrics]
+        values = [str(value) for _, value in metrics]
+        card_width = (page_width - (2 * side_margin)) / max(len(metrics), 1)
+        cards = PdfTable(
+            [
+                [Paragraph(pdf_text(label), summary_label_style) for label in labels],
+                [Paragraph(pdf_text(value), summary_value_style) for value in values],
+            ],
+            colWidths=[card_width] * len(metrics),
+        )
+        cards.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(DBR_SURFACE)),
+            ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor(DBR_BORDER)),
+            ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor(DBR_BORDER)),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING", (0, 0), (-1, 0), 7),
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
+            ("TOPPADDING", (0, 1), (-1, 1), 3),
+            ("BOTTOMPADDING", (0, 1), (-1, 1), 8),
+        ]))
+        return cards
+
     story = []
     if LOGO_PATH.exists():
         story.append(PdfImage(str(LOGO_PATH), width=32 * mm, height=13.5 * mm))
@@ -329,27 +352,7 @@ def build_mudancas_report_pdf(
     ))
 
     story.append(Paragraph("1. Resumo operacional", section_style))
-    summary_labels = [label for label, _ in summary_metrics]
-    summary_values = [str(value) for _, value in summary_metrics]
-    summary_width = (page_width - (2 * side_margin)) / max(len(summary_metrics), 1)
-    summary_table = PdfTable(
-        [
-            [Paragraph(pdf_text(label), summary_label_style) for label in summary_labels],
-            [Paragraph(pdf_text(value), summary_value_style) for value in summary_values],
-        ],
-        colWidths=[summary_width] * len(summary_metrics),
-    )
-    summary_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(DBR_SURFACE)),
-        ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor(DBR_BORDER)),
-        ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor(DBR_BORDER)),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, 0), 7),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
-        ("TOPPADDING", (0, 1), (-1, 1), 3),
-        ("BOTTOMPADDING", (0, 1), (-1, 1), 8),
-    ]))
-    story.append(summary_table)
+    story.append(metric_cards(summary_metrics))
     if attention_messages:
         story.append(Spacer(1, 3 * mm))
         story.append(Paragraph(
@@ -358,7 +361,11 @@ def build_mudancas_report_pdf(
         ))
 
     story.append(Paragraph("2. Mudanças por status", section_style))
-    story.append(pdf_table(status_counts, [page_width - (2 * side_margin) - 120, 120], header_style, body_style))
+    status_metrics = [
+        (str(status), int(count))
+        for status, count in status_counts.itertuples(index=False, name=None)
+    ]
+    story.append(metric_cards(status_metrics))
 
     story.append(Paragraph("3. Tabela geral", section_style))
     story.append(pdf_table(table, [145, 85, 85, 74, 74, 110, 42, 75], header_style, body_style))
