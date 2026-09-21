@@ -64,6 +64,11 @@ st.markdown(
         [data-testid="stSidebarUserContent"] {{ background-color: {DBR_CHROME} !important; border-right: 1px solid {DBR_BORDER} !important; }}
         #MainMenu,
         [data-testid="stMainMenu"] {{ visibility: hidden !important; pointer-events: none !important; height: 0 !important; }}
+        [data-testid="stSidebarCollapseButton"],
+        [data-testid="stSidebarCollapsedControl"],
+        [data-testid="stSidebarCollapsedControl"] *,
+        button[aria-label*="sidebar" i],
+        button[title*="sidebar" i] {{ visibility: visible !important; display: flex !important; pointer-events: auto !important; height: auto !important; }}
         [data-testid="stVerticalBlockBorderWrapper"] {{ background-color: {DBR_SURFACE} !important; border: 1px solid {DBR_BORDER} !important; }}
         [data-testid="stMetric"] {{
             background-color: {DBR_SURFACE} !important;
