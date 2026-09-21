@@ -410,25 +410,22 @@ if date_range and len(date_range) == 2:
 
 
 total = len(filtered)
-late = int((filtered["Situação"] == "ATRASADA").sum())
 today_count = int((filtered["Situação"] == "HOJE").sum())
 next_seven = int((filtered["Situação"] == "PRÓXIMA").sum())
 without_date = int((filtered["Situação"] == "SEM DATA").sum())
 deposit = int((filtered["Status"] == "Depósito - DBR").sum())
+status_counts = filtered["Status"].value_counts().rename_axis("Status").reset_index(name="Mudanças")
 
 st.markdown('<div class="dbr-section">Resumo operacional</div>', unsafe_allow_html=True)
-metric_cols = st.columns(6)
+metric_cols = st.columns(5)
 metric_cols[0].metric("Mudanças", total)
-metric_cols[1].metric("Atrasadas", late)
-metric_cols[2].metric("Para hoje", today_count)
-metric_cols[3].metric("Próximos 7 dias", next_seven)
-metric_cols[4].metric("Sem data", without_date)
-metric_cols[5].metric("Depósito DBR", deposit)
+metric_cols[1].metric("Para hoje", today_count)
+metric_cols[2].metric("Próximos 7 dias", next_seven)
+metric_cols[3].metric("Sem data", without_date)
+metric_cols[4].metric("Depósito DBR", deposit)
 
-if late or today_count or without_date:
+if today_count or without_date:
     messages = []
-    if late:
-        messages.append(f"{late} atrasada(s)")
     if today_count:
         messages.append(f"{today_count} para hoje")
     if without_date:
@@ -443,6 +440,14 @@ if late or today_count or without_date:
 if filtered.empty:
     st.warning("Nenhuma mudança corresponde aos filtros selecionados.")
     st.stop()
+
+
+st.markdown('<div class="dbr-subsection">Mudanças por status</div>', unsafe_allow_html=True)
+status_columns = st.columns(len(status_counts))
+for status_column, (status, count) in zip(
+    status_columns, status_counts.itertuples(index=False, name=None)
+):
+    status_column.metric(status, int(count))
 
 
 st.markdown('<div class="dbr-subsection">Tabela geral</div>', unsafe_allow_html=True)
@@ -460,8 +465,6 @@ st.download_button(
 )
 
 
-st.markdown('<div class="dbr-subsection">Mudanças por status</div>', unsafe_allow_html=True)
-status_counts = filtered["Status"].value_counts().rename_axis("Status").reset_index(name="Mudanças")
 fig = make_bar_chart(status_counts, "Mudanças", "Status", "Mudanças por status", "Status")
 fig.update_layout(yaxis=dict(categoryorder="total ascending"))
 fig.update_traces(marker_color=DBR_BLUE)
