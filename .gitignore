@@ -3,3 +3,9 @@ __pycache__/
 .venv/
 venv/
 *.xlsx
+
+# Local credentials and private configuration
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
